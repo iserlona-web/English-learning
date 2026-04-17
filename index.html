@@ -1,0 +1,74 @@
+
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>2026 拼字挑戰學習站</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fa; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+                h1 { color: #1a73e8; font-size: 1.5rem; margin-bottom: 10px; }
+                .filter-section { background: white; padding: 10px 20px; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; width: 90%; max-width: 400px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+                select { border: 1px solid #ddd; padding: 5px 10px; border-radius: 15px; outline: none; }
+                .word-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; width: 100%; max-width: 800px; }
+                .word-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); cursor: pointer; display: flex; flex-direction: column; position: relative; border: 1px solid #eee; }
+                .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+                .no { background: #e8f0fe; color: #1a73e8; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+                .date-tag { font-size: 0.65rem; color: #bbb; }
+                .en { font-size: 1.1rem; font-weight: bold; color: #202124; margin: 5px 0; word-break: break-word; }
+                .zh { font-size: 0.9rem; color: #5f6368; }
+                @media (max-width: 480px) { .word-container { grid-template-columns: 1fr 1fr; } }
+            </style>
+        </head>
+        <body>
+            <h1>🏆 拼字挑戰</h1>
+            
+            <div class="filter-section">
+                <span>📅</span>
+                <select id="dateSelect" onchange="filterWords()">
+                    <option value="all">全部日期</option>
+                    <option value="2026-04-19">2026-04-19</option><option value="2026-04-18">2026-04-18</option><option value="2026-04-17">2026-04-17</option>
+                </select>
+            </div>
+
+            <div class="word-container" id="container"></div>
+
+            <script>
+                // 資料已在生成時直接寫入此變數
+                const words = [{"日期":"2026-04-17","序號":1,"單字":"department","中文":"部門","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":2,"單字":"clothing","中文":"衣著","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":3,"單字":"teddy bear","中文":"泰迪熊","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":4,"單字":"toy train","中文":"玩具火車","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":5,"單字":"puzzle","中文":"拼圖","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":6,"單字":"doll","中文":"洋娃娃","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":7,"單字":"robot","中文":"機器人","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":8,"單字":"model airplane","中文":"模型飛機","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":9,"單字":"glove","中文":"手套","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":10,"單字":"roller skates","中文":"輪式溜冰鞋","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":11,"單字":"sleeping bag","中文":"睡袋","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":12,"單字":"fishing pole","中文":"釣魚竿","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":13,"單字":"furniture","中文":"家具","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":14,"單字":"frozen foods","中文":"冷凍食品","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-17","序號":15,"單字":"dairy product","中文":"乳製品","上次正確率 (04\/17 22:03)":"100%"},{"日期":"2026-04-18","序號":16,"單字":"canned goods","中文":"罐頭貨品","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":17,"單字":"beverage","中文":"飲料","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":18,"單字":"cooking oil","中文":"食用油","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":19,"單字":"snack","中文":"點心","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":20,"單字":"sporting goods","中文":"運動用品","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":21,"單字":"supermarket","中文":"超市","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":22,"單字":"grocery","中文":"雜貨","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":23,"單字":"boots","中文":"靴子","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":24,"單字":"directory","中文":"指南","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":25,"單字":"jewelry","中文":"珠寶首飾","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":26,"單字":"necklace","中文":"項鍊","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":27,"單字":"wear","中文":"穿；戴","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":28,"單字":"nothing","中文":"沒有事物","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":29,"單字":"important","中文":"重要的","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-18","序號":30,"單字":"wrong","中文":"錯的","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":31,"單字":"almost","中文":"幾乎","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":32,"單字":"pocket","中文":"口袋","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":33,"單字":"worry","中文":"擔心","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":34,"單字":"really","中文":"真地","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":35,"單字":"hear","中文":"聽到","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":36,"單字":"sky","中文":"天空","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":37,"單字":"understand","中文":"了解","上次正確率 (04\/17 22:03)":null},{"日期":"2026-04-19","序號":38,"單字":"listen to","中文":"聆聽","上次正確率 (04\/17 22:03)":null}];
+                
+                function speak(text) {
+                    window.speechSynthesis.cancel();
+                    const msg = new SpeechSynthesisUtterance(text);
+                    msg.lang = 'en-US';
+                    msg.rate = 0.8;
+                    window.speechSynthesis.speak(msg);
+                }
+
+                function filterWords() {
+                    const selectedDate = document.getElementById('dateSelect').value;
+                    const container = document.getElementById('container');
+                    container.innerHTML = "";
+
+                    words.forEach(item => {
+                        if (selectedDate === "all" || String(item.日期) === selectedDate) {
+                            const card = document.createElement('div');
+                            card.className = 'word-card';
+                            card.onclick = () => speak(item.單字);
+                            card.innerHTML = `
+                                <div class="header">
+                                    <span class="no">No. ${item.序號}</span>
+                                    <span class="date-tag">${item.日期}</span>
+                                </div>
+                                <div class="en">${item.單字}</div>
+                                <div class="zh">${item.中文}</div>
+                            `;
+                            container.appendChild(card);
+                        }
+                    });
+                }
+                filterWords();
+            </script>
+        </body>
+        </html>
+        
