@@ -3,76 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 拼字挑戰雲端學習站</title>
+    <title>2026 拼字英雄傳說</title>
     <style>
-        :root { --primary: #1a73e8; --success: #34a853; --warning: #f1c40f; --danger: #e74c3c; }
-        body { font-family: -apple-system, sans-serif; background-color: #f5f7fa; padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        .nav { display: flex; background: white; border-radius: 30px; padding: 5px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 10px; z-index: 50; }
-        .nav-item { padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; color: #5f6368; }
-        .nav-item.active { background: var(--primary); color: white; }
-        .stats { font-size: 0.75rem; display: flex; gap: 5px; margin-bottom: 15px; }
-        .box-tag { padding: 2px 6px; border-radius: 4px; color: white; }
-        .b1 { background: var(--danger); } .b2 { background: #e67e22; } .b3 { background: var(--warning); color: #333; } .b4 { background: var(--success); } .b5 { background: #3498db; }
-        .page { width: 100%; max-width: 1000px; display: none; }
+        :root { --n: #ffffff; --r: #2ecc71; --sr: #3498db; --ssr: #9b59b6; --ur: #f1c40f; }
+        body { font-family: 'PingFang TC', sans-serif; background: #2c3e50; color: #ecf0f1; padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        
+        .nav { display: flex; background: rgba(255,255,255,0.1); border-radius: 30px; padding: 5px; margin-bottom: 20px; }
+        .nav-item { padding: 10px 25px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        .nav-item.active { background: #e74c3c; color: white; box-shadow: 0 0 15px #e74c3c; }
+
+        /* 稀有度按鈕區 */
+        .rarity-stats { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .btn-filter { padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; border: 2px solid transparent; cursor: pointer; transition: 0.3s; color: #333; text-align: center; min-width: 60px; }
+        .btn-filter:active { transform: scale(0.9); }
+        .btn-filter.active { border-color: #ff4757; box-shadow: 0 0 15px rgba(255,255,255,0.5); transform: translateY(-3px); }
+        
+        .b1 { background: var(--n); } .b2 { background: var(--r); color: white; } 
+        .b3 { background: var(--sr); color: white; } .b4 { background: var(--ssr); color: white; } 
+        .b5 { background: var(--ur); text-shadow: 0 0 3px white; }
+
+        .page { width: 100%; max-width: 800px; display: none; }
         .page.active { display: block; }
-        .filter-section, .quiz-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
-        select { border: 1px solid #ddd; padding: 8px; border-radius: 15px; font-size: 1rem; }
-        .word-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-        .word-card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); cursor: pointer; border: 1px solid #eee; }
-        .en { font-size: 1.5rem; font-weight: bold; color: #202124; }
-        .hint { font-size: 0.85rem; color: #e67e22; background: #fff9f0; padding: 8px; border-radius: 5px; border-left: 3px solid #f39c12; margin-top: 10px; }
-        #quiz-input { width: 80%; font-size: 1.8rem; padding: 10px; border: 2px solid #ddd; border-radius: 10px; text-align: center; margin: 15px 0; }
-        .btn { padding: 12px 30px; border: none; border-radius: 30px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); display:flex; justify-content:center; align-items:center; z-index:1000; font-weight:bold; }
+
+        .word-card { background: rgba(255,255,255,0.9); color: #333; border-radius: 15px; padding: 15px; margin-bottom: 12px; border-left: 10px solid #ccc; transition: 0.3s; cursor: pointer; }
+        .word-card.rarity-1 { border-color: var(--n); }
+        .word-card.rarity-2 { border-color: var(--r); }
+        .word-card.rarity-3 { border-color: var(--sr); }
+        .word-card.rarity-4 { border-color: var(--ssr); }
+        .word-card.rarity-5 { border-color: var(--ur); }
+        .en { font-size: 1.6rem; font-weight: 900; color: #2c3e50; }
+        .zh { font-size: 1.1rem; color: #7f8c8d; }
+        .hint { font-size: 0.85rem; color: #d35400; background: #fff3e0; padding: 8px; border-radius: 8px; border-left: 4px solid #ff9800; margin-top: 10px; line-height: 1.4; }
+
+        .quiz-container { background: #34495e; padding: 30px 20px; border-radius: 20px; text-align: center; border: 3px solid #e74c3c; }
+        #quiz-input { width: 85%; font-size: 2rem; padding: 12px; border: none; border-radius: 10px; margin: 20px 0; text-align: center; }
+        .btn-evo { background: #e74c3c; color: white; font-size: 1.2rem; padding: 15px 40px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 5px 0 #c0392b; }
+        .btn-evo:active { transform: translateY(3px); box-shadow: 0 2px 0 #c0392b; }
+
+        @keyframes glow { 0% { box-shadow: 0 0 5px #f1c40f; } 100% { box-shadow: 0 0 30px #f1c40f; } }
+        .evo-success { animation: glow 0.5s infinite alternate; border: 4px solid #f1c40f !important; }
+
+        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:#2c3e50; display:flex; justify-content:center; align-items:center; z-index:1000; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="loading">📡 正在從雲端同步單字...</div>
+    <div id="loading">⚔️ 正在同步英雄狀態...</div>
 
-    <h1>🏆 拼字挑戰雲端站</h1>
+    <h1 style="margin: 10px 0;">🛡️ 拼字英雄傳說</h1>
+    
+    <div class="rarity-stats" id="rarity-btn-group"></div>
+
     <div class="nav">
-        <div id="nav-study" class="nav-item active" onclick="switchPage('study')">📖 學習卡</div>
-        <div id="nav-quiz" class="nav-item" onclick="switchPage('quiz')">🔥 測驗模式</div>
+        <div id="nav-study" class="nav-item active" onclick="switchPage('study')">📜 英雄名冊</div>
+        <div id="nav-quiz" class="nav-item" onclick="switchPage('quiz')">⚡ 升等模式</div>
     </div>
-    <div class="stats" id="stats-area"></div>
 
     <div id="study-page" class="page active">
-        <div class="filter-section">
-            📅 日期：<select id="dateSelect" onchange="filterWords()"></select>
+        <div style="text-align: center; margin-bottom: 15px;">
+            <select id="dateSelect" onchange="resetFilterAndRender()" style="padding: 10px; border-radius: 12px; font-size: 1rem; border: none;"></select>
         </div>
-        <div id="card-container" class="word-container"></div>
+        <div id="card-container"></div>
     </div>
 
     <div id="quiz-page" class="page">
-        <div id="quiz-start-ui" class="quiz-box">
-            <h3>⚙️ 測驗設定</h3>
-            <select id="quizAmount"><option value="10">10 題</option><option value="20">20 題</option><option value="all">全部</option></select>
-            <button class="btn" onclick="startQuiz()">開始測驗</button>
+        <div id="quiz-start-ui" class="quiz-container">
+            <h2>今日體力：10 次進化機會</h2>
+            <p>準備好讓你的英雄更強大了嗎？</p>
+            <button class="btn-evo" onclick="startQuiz()">🔥 開始挑戰</button>
         </div>
-        <div id="quiz-run-ui" style="display:none;" class="quiz-box">
-            <div id="quiz-progress"></div>
-            <h2 id="quiz-zh"></h2>
-            <input type="text" id="quiz-input" autocomplete="off" autocapitalize="none">
-            <div id="quiz-feedback" style="margin-bottom:10px; font-weight:bold;"></div>
-            <button id="quiz-btn" class="btn" onclick="handleQuizAction()">送出</button>
-            <div id="quiz-hint" class="hint" style="display:none;"></div>
+        <div id="quiz-run-ui" style="display:none;" class="quiz-container">
+            <div id="rarity-indicator" style="font-weight: 800; margin-bottom: 10px;"></div>
+            <h2 id="quiz-zh" style="font-size: 2.5rem; color: #f1c40f;"></h2>
+            <input type="text" id="quiz-input" autocomplete="off" autocapitalize="none" placeholder="輸入咒語...">
+            <div id="quiz-feedback" style="font-size: 1.5rem; margin-bottom: 15px; font-weight: bold;"></div>
+            <button id="quiz-btn" class="btn-evo" onclick="handleQuizAction()">確認</button>
+            <div id="quiz-hint-area" class="hint" style="display:none; text-align: left; background: #fff;"></div>
         </div>
     </div>
 
     <script>
-        // !!! 請在這裡貼上您的 Google Apps Script 網址 !!!
-        const API_URL = "https://script.google.com/macros/s/AKfycbz288-bC7HIvil7a6l32H7exIAfZANnmGCI26_LnPauBTopYN7uo3m5pnhpKLew_rpF/exec"; 
-        
+        const API_URL = "https://script.google.com/macros/s/AKfycbyMT6PQQdDNBp_jXovykurqN86SaLG-JXQMr_wPQT0JvbVCyIBlS4vj9PcKwVi6ecUK/exec"; 
         let words = [];
-        let quizQueue = [], currentIdx = 0, results = [], isChecking = true;
+        let quizQueue = [], currentIdx = 0;
+        let selectedRarity = null; // 追蹤目前選中的稀有度
+        const rarityNames = ["", "N", "R", "SR", "SSR", "UR"];
+
+        function cleanDate(dateStr) {
+            if (!dateStr) return "";
+            const raw = String(dateStr).split(' ')[0];
+            const d = new Date(raw);
+            if (isNaN(d)) return raw; 
+            return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+        }
 
         async function fetchData() {
             try {
                 const res = await fetch(API_URL);
                 words = await res.json();
+                words = words.map(w => ({
+                    ...w,
+                    日期: cleanDate(w.日期),
+                    LastDate: cleanDate(w.LastDate)
+                }));
                 document.getElementById('loading').style.display = 'none';
                 init();
-            } catch (e) { alert("讀取雲端資料失敗：" + e); }
+            } catch (e) { alert("讀取英雄名冊失敗。"); }
         }
 
         function switchPage(p) {
@@ -89,104 +124,144 @@
             window.speechSynthesis.speak(m);
         }
 
+        // 重置稀有度過濾並重新渲染
+        function resetFilterAndRender() {
+            selectedRarity = null;
+            const btns = document.querySelectorAll('.btn-filter');
+            btns.forEach(b => b.classList.remove('active'));
+            filterWords();
+        }
+
+        // 切換稀有度過濾
+        function toggleRarity(boxNum, btnEl) {
+            if (selectedRarity === boxNum) {
+                selectedRarity = null;
+                btnEl.classList.remove('active');
+            } else {
+                document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+                selectedRarity = boxNum;
+                btnEl.classList.add('active');
+            }
+            filterWords();
+        }
+
         function filterWords() {
-            const val = document.getElementById('dateSelect').value;
+            const dateVal = document.getElementById('dateSelect').value;
             const container = document.getElementById('card-container');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
             container.innerHTML = "";
             words.forEach(w => {
-                if (val === "all" || formatDate(w.日期) === val) {
-                    const div = document.createElement('div');
-                    div.className = 'word-card';
-                    div.onclick = () => speak(w.單字);
-                    div.innerHTML = `<div style="font-size:0.7rem; color:#bbb;">No. ${w.序號} | Box ${w.Box}</div>
-                                     <div class="en">${w.單字}</div><div class="zh">${w.中文}</div>
-                                     ${w.小秘訣 ? `<div class="hint">💡 ${w.小秘訣}</div>` : ''}`;
-                    container.appendChild(div);
+                const wordDate = new Date(w.日期);
+                if (wordDate <= today) {
+                    const matchesDate = (dateVal === "all" || w.日期 === dateVal);
+                    const matchesRarity = (selectedRarity === null || w.Box == selectedRarity);
+                    
+                    if (matchesDate && matchesRarity) {
+                        const div = document.createElement('div');
+                        div.className = `word-card rarity-${w.Box}`;
+                        div.onclick = () => speak(w.單字);
+                        div.innerHTML = `
+                            <div style="font-weight:bold; font-size:0.8rem; color:#95a5a6;">${rarityNames[w.Box]} 等級</div>
+                            <div class="en">${w.單字}</div>
+                            <div class="zh">${w.中文}</div>
+                            ${w.小秘訣 ? `<div class="hint">💡 秘訣：${w.小秘訣}</div>` : ''}
+                        `;
+                        container.appendChild(div);
+                    }
                 }
             });
         }
 
         function startQuiz() {
             const today = new Date();
-            const amt = document.getElementById('quizAmount').value;
+            today.setHours(0,0,0,0);
             let pool = words.filter(w => {
-                const diff = Math.floor((today - new Date(w.LastDate)) / 86400000);
-                return w.Box == 1 || (w.Box == 2 && diff >= 3) || (w.Box == 3 && diff >= 7) || (w.Box == 4 && diff >= 30) || (w.Box == 5 && diff >= 365);
+                const last = new Date(w.LastDate);
+                last.setHours(0,0,0,0);
+                const diff = Math.floor((today - last) / 86400000);
+                const isReleased = new Date(w.日期) <= today;
+                const isDue = w.Box == 1 || (w.Box == 2 && diff >= 3) || (w.Box == 3 && diff >= 7) || (w.Box == 4 && diff >= 30);
+                return isReleased && isDue;
             }).sort(() => Math.random() - 0.5);
 
-            if (amt !== "all") pool = pool.slice(0, parseInt(amt));
-            if (pool.length === 0) return alert("今日無須複習！");
-            quizQueue = pool;
+            if (pool.length === 0) return alert("所有英雄都已完成修行！");
+            quizQueue = pool.slice(0, 10);
             document.getElementById('quiz-start-ui').style.display = 'none';
             document.getElementById('quiz-run-ui').style.display = 'block';
+            currentIdx = 0;
             showQuestion();
         }
 
         function showQuestion() {
             const q = quizQueue[currentIdx];
-            document.getElementById('quiz-progress').innerText = `${currentIdx+1}/${quizQueue.length}`;
+            document.getElementById('rarity-indicator').innerHTML = `<span class="badge b${q.Box}" style="display:inline-block">${rarityNames[q.Box]} → ${rarityNames[q.Box+1] || 'MAX'}</span>`;
             document.getElementById('quiz-zh').innerText = q.中文;
-            const i = document.getElementById('quiz-input');
-            i.value = ""; i.disabled = false; i.focus();
+            const input = document.getElementById('quiz-input');
+            input.value = ""; input.disabled = false; input.focus();
             document.getElementById('quiz-feedback').innerText = "";
-            document.getElementById('quiz-hint').style.display = "none";
-            document.getElementById('quiz-btn').innerText = "送出";
-            isChecking = true;
+            document.getElementById('quiz-hint-area').style.display = "none";
+            document.getElementById('quiz-btn').innerText = "進化！";
+            document.querySelector('.quiz-container').classList.remove('evo-success');
             speak(q.單字);
         }
 
         async function handleQuizAction() {
-            if (isChecking) {
-                const q = quizQueue[currentIdx];
+            const q = quizQueue[currentIdx];
+            const btn = document.getElementById('quiz-btn');
+            if (btn.innerText === "進化！") {
                 const ans = document.getElementById('quiz-input').value.trim().toLowerCase();
                 const correct = ans === q.單字.toLowerCase();
-                const feedback = document.getElementById('quiz-feedback');
                 document.getElementById('quiz-input').disabled = true;
-
-                let newBox = correct ? Math.min(q.Box + 1, 5) : 1;
-                results.push({ no: q.序號, newBox: newBox });
-
-                if (correct) { feedback.innerText = "✅ 正確！"; feedback.style.color = "var(--success)"; }
-                else { 
-                    feedback.innerText = "❌ 答案：" + q.單字; feedback.style.color = "var(--danger)";
-                    if(q.小秘訣) { document.getElementById('quiz-hint').innerText = "💡 " + q.小秘訣; document.getElementById('quiz-hint').style.display = "block"; }
+                if (correct) {
+                    document.getElementById('quiz-feedback').innerText = "✨ 進化成功！";
+                    document.getElementById('quiz-feedback').style.color = "#2ecc71";
+                    document.querySelector('.quiz-container').classList.add('evo-success');
+                    saveUpdate(q.序號, Math.min(q.Box + 1, 5));
+                } else {
+                    document.getElementById('quiz-feedback').innerText = "💥 進化失敗...";
+                    document.getElementById('quiz-feedback').style.color = "#e74c3c";
+                    document.getElementById('quiz-hint-area').innerHTML = `正確咒語：<b>${q.單字}</b><br>💡 秘訣：${q.小秘訣}`;
+                    document.getElementById('quiz-hint-area').style.display = "block";
+                    saveUpdate(q.序號, 1);
                 }
-                document.getElementById('quiz-btn').innerText = "下一題";
-                isChecking = false;
+                btn.innerText = "下一個";
             } else {
                 currentIdx++;
                 if (currentIdx < quizQueue.length) showQuestion();
-                else {
-                    document.getElementById('loading').style.display = 'flex';
-                    document.getElementById('loading').innerText = "正在儲存進度到雲端...";
-                    await fetch(API_URL, { method: 'POST', body: JSON.stringify(results) });
-                    alert("儲存完成！");
-                    location.reload();
-                }
+                else { alert("挑戰結束！"); location.reload(); }
             }
         }
 
-        function formatDate(d) {
-            const dt = new Date(d);
-            return `${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;
+        function saveUpdate(no, newBox) {
+            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ no: no, newBox: newBox }) });
         }
 
         function init() {
-            const stats = document.getElementById('stats-area');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const todayStr = `${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
+
+            const btnGroup = document.getElementById('rarity-btn-group');
+            btnGroup.innerHTML = "";
             [1,2,3,4,5].forEach(b => {
-                const count = words.filter(w => w.Box == b).length;
-                stats.innerHTML += `<span class="box-tag b${b}">B${b}: ${count}</span>`;
+                const count = words.filter(w => w.Box == b && new Date(w.日期) <= today).length;
+                const btn = document.createElement('div');
+                btn.className = `btn-filter b${b}`;
+                btn.innerHTML = `${rarityNames[b]}<br>${count}`;
+                btn.onclick = () => toggleRarity(b, btn);
+                btnGroup.appendChild(btn);
             });
 
             const ds = document.getElementById('dateSelect');
-            const dates = [...new Set(words.map(w => formatDate(w.日期)))].sort().reverse();
-            ds.innerHTML = '<option value="all">全部</option>' + dates.map(d => `<option value="${d}">${d}</option>`).join('');
-            
-            const today = formatDate(new Date());
-            ds.value = dates.includes(today) ? today : "all";
+            const availableDates = [...new Set(words.filter(w => new Date(w.日期) <= today).map(w => w.日期))].sort((a, b) => new Date(b) - new Date(a));
+            ds.innerHTML = '<option value="all">📜 全部已解鎖英雄</option>' + availableDates.map(d => `<option value="${d}">${d}</option>`).join('');
+            if (availableDates.includes(todayStr)) ds.value = todayStr;
+            else if (availableDates.length > 0) ds.value = availableDates[0];
+
             filterWords();
         }
-
         fetchData();
     </script>
 </body>
