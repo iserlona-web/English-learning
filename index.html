@@ -24,11 +24,17 @@
         .btn-filter.active { border-color: var(--star-color); background: rgba(241, 196, 15, 0.2); transform: translateY(-3px); }
         .btn-filter .stars { color: var(--star-color); font-size: 0.7rem; display: block; margin-bottom: 3px; }
 
+        /* 控制列 */
+        .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 800px; }
+        .btn-loop { background: #34495e; color: #ecf0f1; border: 2px solid var(--star-color); padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-loop.active { background: var(--star-color); color: #333; box-shadow: 0 0 15px var(--star-color); }
+
         .page { width: 100%; max-width: 800px; display: none; }
         .page.active { display: block; }
 
         /* 學習卡 */
-        .word-card { background: var(--card-bg); color: #333; border-radius: 15px; padding: 18px; margin-bottom: 12px; border-left: 8px solid #ccc; transition: 0.3s; cursor: pointer; position: relative; }
+        .word-card { background: var(--card-bg); color: #333; border-radius: 15px; padding: 18px; margin-bottom: 12px; border-left: 8px solid #ccc; transition: 0.4s; cursor: pointer; position: relative; }
+        .word-card.playing { transform: scale(1.05); box-shadow: 0 0 25px var(--star-color); border-left-width: 15px; z-index: 10; }
         .card-stars { color: var(--star-color); font-size: 0.8rem; margin-bottom: 5px; }
         .en { font-size: 1.7rem; font-weight: 900; color: #2c3e50; }
         .zh { font-size: 1.1rem; color: #555; }
@@ -41,7 +47,6 @@
         
         #quiz-input { width: 85%; font-size: 2.2rem; padding: 12px; border: none; border-radius: 15px; margin: 15px 0; text-align: center; background: #fff; color: #333; }
         
-        /* 音量按鈕 */
         .btn-audio { background: #5d6d7e; color: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
         .btn-audio:active { transform: scale(0.9); background: var(--star-color); }
 
@@ -67,8 +72,9 @@
     </div>
 
     <div id="study-page" class="page active">
-        <div style="text-align: center; margin-bottom: 15px;">
-            <select id="dateSelect" onchange="resetFilterAndRender()" style="padding: 10px; border-radius: 12px; font-size: 1rem;"></select>
+        <div class="controls">
+            <select id="dateSelect" onchange="resetFilterAndRender()" style="padding: 10px; border-radius: 12px; font-size: 1rem; width: 60%;"></select>
+            <button id="loopBtn" class="btn-loop" onclick="toggleLoop()">🔁 循環播放</button>
         </div>
         <div id="card-container"></div>
     </div>
@@ -95,43 +101,103 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyMT6PQQdDNBp_jXovykurqN86SaLG-JXQMr_wPQT0JvbVCyIBlS4vj9PcKwVi6ecUK/exec"; 
         let words = [];
+        let displayedWords = []; // 目前名冊中顯示的單字
         let quizQueue = [], currentIdx = 0;
         let selectedRarity = null;
+        let isLooping = false;
+        let loopIdx = 0;
 
         function getStars(num) {
             return "★".repeat(num) + "☆".repeat(5 - num);
         }
 
+        // 強化日期清洗邏輯：嚴格去除時分秒
         function cleanDate(dateStr) {
             if (!dateStr) return "";
-            const raw = String(dateStr).split(' ')[0];
+            // 如果是 Google Sheets 傳來的完整字串，取空格前的部分
+            const raw = String(dateStr).split(' ')[0].split('T')[0]; 
             const d = new Date(raw);
-            return isNaN(d) ? raw : `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+            if (isNaN(d.getTime())) return raw;
+            // 格式化為簡潔的 YYYY/M/D
+            return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
         }
 
         async function fetchData() {
             try {
                 const res = await fetch(API_URL);
-                words = await res.json();
-                words = words.map(w => ({ ...w, 日期: cleanDate(w.日期), LastDate: cleanDate(w.LastDate) }));
+                const rawData = await res.json();
+                words = rawData.map(w => ({ 
+                    ...w, 
+                    日期: cleanDate(w.日期), 
+                    LastDate: cleanDate(w.LastDate) 
+                }));
                 document.getElementById('loading').style.display = 'none';
                 init();
             } catch (e) { alert("連結失敗。"); }
         }
 
         function switchPage(p) {
+            stopLoop(); // 切換分頁時務必停止循環播放
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(p + '-page').classList.add('active');
             document.getElementById('nav-' + p).classList.add('active');
         }
 
-        function speak(t) {
+        function speak(t, callback) {
             window.speechSynthesis.cancel();
             const m = new SpeechSynthesisUtterance(t);
             m.lang = 'en-US';
             m.rate = 0.8;
+            if (callback) {
+                m.onend = () => { setTimeout(callback, 1200); }; // 唸完停頓 1.2 秒
+            }
             window.speechSynthesis.speak(m);
+        }
+
+        // --- 循環播放邏輯模組 ---
+        function toggleLoop() {
+            if (isLooping) {
+                stopLoop();
+            } else {
+                if (displayedWords.length === 0) return;
+                isLooping = true;
+                loopIdx = 0;
+                document.getElementById('loopBtn').classList.add('active');
+                document.getElementById('loopBtn').innerText = "⏹️ 停止播放";
+                playNextLoop();
+            }
+        }
+
+        function stopLoop() {
+            isLooping = false;
+            window.speechSynthesis.cancel();
+            document.getElementById('loopBtn').classList.remove('active');
+            document.getElementById('loopBtn').innerText = "🔁 循環播放";
+            document.querySelectorAll('.word-card').forEach(c => c.classList.remove('playing'));
+        }
+
+        function playNextLoop() {
+            if (!isLooping) return;
+            if (loopIdx >= displayedWords.length) loopIdx = 0; // 循環回到第一個
+
+            // UI 反饋
+            const cards = document.querySelectorAll('.word-card');
+            cards.forEach(c => c.classList.remove('playing'));
+            const targetCard = cards[loopIdx];
+            
+            if (targetCard) {
+                targetCard.classList.add('playing');
+                // 規格：自動捲動到畫面中央
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            speak(displayedWords[loopIdx].單字, () => {
+                if (isLooping) {
+                    loopIdx++;
+                    playNextLoop();
+                }
+            });
         }
 
         function repeatAudio() {
@@ -139,12 +205,14 @@
         }
 
         function resetFilterAndRender() {
+            stopLoop();
             selectedRarity = null;
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
             filterWords();
         }
 
         function toggleRarity(boxNum, btnEl) {
+            stopLoop();
             if (selectedRarity === boxNum) {
                 selectedRarity = null;
                 btnEl.classList.remove('active');
@@ -161,32 +229,41 @@
             const container = document.getElementById('card-container');
             const today = new Date(); today.setHours(0,0,0,0);
             container.innerHTML = "";
-            words.forEach(w => {
+            
+            // 篩選出符合條件的單字並存入 displayedWords
+            displayedWords = words.filter(w => {
                 const wordDate = new Date(w.日期);
-                if (wordDate <= today && (dateVal === "all" || w.日期 === dateVal) && (selectedRarity === null || w.Box == selectedRarity)) {
-                    const div = document.createElement('div');
-                    div.className = 'word-card';
-                    div.style.borderLeftColor = ["","#ccc","#2ecc71","#3498db","#9b59b6","#f1c40f"][w.Box];
-                    div.onclick = () => speak(w.單字);
-                    div.innerHTML = `
-                        <div class="card-stars">${getStars(w.Box)}</div>
-                        <div class="en">${w.單字}</div>
-                        <div class="zh">${w.中文}</div>
-                        ${w.小秘訣 ? `<div class="hint">💡 秘訣：${w.小秘訣}</div>` : ''}
-                    `;
-                    container.appendChild(div);
-                }
+                return (wordDate <= today) && 
+                       (dateVal === "all" || w.日期 === dateVal) && 
+                       (selectedRarity === null || w.Box == selectedRarity);
+            });
+
+            displayedWords.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'word-card';
+                div.style.borderLeftColor = ["","#ccc","#2ecc71","#3498db","#9b59b6","#f1c40f"][w.Box];
+                div.onclick = () => { stopLoop(); speak(w.單字); };
+                div.innerHTML = `
+                    <div class="card-stars">${getStars(w.Box)}</div>
+                    <div class="en">${w.單字}</div>
+                    <div class="zh">${w.中文}</div>
+                    ${w.小秘訣 ? `<div class="hint">💡 秘訣：${w.小秘訣}</div>` : ''}
+                `;
+                container.appendChild(div);
             });
         }
 
         function startQuiz() {
             const today = new Date(); today.setHours(0,0,0,0);
             let pool = words.filter(w => {
-                const diff = Math.floor((today - new Date(w.LastDate)) / 86400000);
-                return (new Date(w.日期) <= today) && (w.Box == 1 || (w.Box == 2 && diff >= 3) || (w.Box == 3 && diff >= 7) || (w.Box == 4 && diff >= 30));
+                const lastRev = w.LastDate ? new Date(w.LastDate) : new Date(2000, 0, 1);
+                const diff = Math.floor((today - lastRev) / 86400000);
+                const wordDate = new Date(w.日期);
+                return (wordDate <= today) && 
+                       (w.Box == 1 || (w.Box == 2 && diff >= 3) || (w.Box == 3 && diff >= 7) || (w.Box == 4 && diff >= 30));
             }).sort(() => Math.random() - 0.5);
 
-            if (pool.length === 0) return alert("今日挑戰已完成！");
+            if (pool.length === 0) return alert("今日修煉完成！");
             quizQueue = pool.slice(0, 10);
             document.getElementById('quiz-start-ui').style.display = 'none';
             document.getElementById('quiz-run-ui').style.display = 'block';
@@ -219,7 +296,7 @@
                     document.querySelector('.quiz-container').classList.add('evo-success');
                     saveUpdate(q.序號, Math.min(q.Box + 1, 5));
                 } else {
-                    document.getElementById('quiz-feedback').innerText = "💥 在找機會試試看";
+                    document.getElementById('quiz-feedback').innerText = "💥 再找機會試試看";
                     document.getElementById('quiz-feedback').style.color = "#e74c3c";
                     document.getElementById('quiz-hint-area').innerHTML = `正確答案：<b>${q.單字}</b><br>💡 ${q.小秘訣}`;
                     document.getElementById('quiz-hint-area').style.display = "block";
@@ -241,6 +318,8 @@
             const today = new Date(); today.setHours(0,0,0,0);
             const btnGroup = document.getElementById('rarity-btn-group');
             btnGroup.innerHTML = "";
+            
+            // 生成星星篩選按鈕
             [1,2,3,4,5].forEach(b => {
                 const count = words.filter(w => w.Box == b && new Date(w.日期) <= today).length;
                 const btn = document.createElement('div');
@@ -250,13 +329,19 @@
                 btnGroup.appendChild(btn);
             });
 
+            // 生成日期選單
             const ds = document.getElementById('dateSelect');
-            const availableDates = [...new Set(words.filter(w => new Date(w.日期) <= today).map(w => w.日期))].sort((a, b) => new Date(b) - new Date(a));
+            const availableDates = [...new Set(words.filter(w => new Date(w.日期) <= today).map(w => w.日期))]
+                .sort((a, b) => new Date(b) - new Date(a));
+            
             ds.innerHTML = '<option value="all">📜 全部英雄</option>' + availableDates.map(d => `<option value="${d}">${d}</option>`).join('');
+            
             const todayStr = `${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
             ds.value = availableDates.includes(todayStr) ? todayStr : (availableDates[0] || "all");
+            
             filterWords();
         }
+        
         fetchData();
     </script>
 </body>
